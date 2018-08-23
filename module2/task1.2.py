@@ -82,6 +82,66 @@ def compute_grad_analytically(neuron, X, y, J_prime=J_quadratic_derivative):
     return grad
 
 
+def compute_grad_numerically(neuron, X, y, J=J_quadratic, eps=10e-2):
+    """
+    Численная производная целевой функции
+    neuron - объект класса Neuron
+    X - вертикальная матрица входов формы (n, m), на которой считается сумма квадратов отклонений
+    y - правильные ответы для тестовой выборки X
+    J - целевая функция, градиент которой мы хотим получить
+    eps - размер $\delta w$ (малого изменения весов)
+    """
+
+    initial_cost = J(neuron, X, y)
+    w_0 = neuron.w
+    num_grad = np.zeros(w_0.shape)
+
+    for i in range(len(w_0)):
+        old_wi = neuron.w[i].copy()
+        # Меняем вес
+        neuron.w[i] += eps
+
+        # Считаем новое значение целевой функции и вычисляем приближенное значение градиента
+        num_grad[i] = (J(neuron, X, y) - initial_cost) / eps
+
+        # Возвращаем вес обратно. Лучше так, чем -= eps, чтобы не накапливать ошибки округления
+        neuron.w[i] = old_wi
+
+    # проверим, что не испортили нейрону веса своими манипуляциями
+    assert np.allclose(neuron.w, w_0), "МЫ ИСПОРТИЛИ НЕЙРОНУ ВЕСА"
+    return num_grad
+
+
+def compute_grad_numerically_2(neuron, X, y, J=J_quadratic, eps=10e-2):
+    """
+    Численная производная целевой функции.
+    neuron - объект класса Neuron с вертикальным вектором весов w,
+    X - вертикальная матрица входов формы (n, m), на которой считается сумма квадратов отклонений,
+    y - правильные ответы для тестовой выборки X,
+    J - целевая функция, градиент которой мы хотим получить,
+    eps - размер $\delta w$ (малого изменения весов).
+    """
+    # эту функцию необходимо реализовать
+    w_0 = neuron.w
+    num_grad = np.zeros(w_0.shape)
+    for i in range(len(w_0)):
+        old_wi = neuron.w[i].copy()
+        # Меняем вес
+        neuron.w[i] += eps
+        Jplus = J(neuron, X, y)
+        neuron.w[i] = old_wi - eps
+        Jminus = J(neuron, X, y)
+        # Считаем новое значение целевой функции и вычисляем приближенное значение градиента
+        num_grad[i] = (Jplus - Jminus) / (2 * eps)
+
+        # Возвращаем вес обратно. Лучше так, чем -= eps, чтобы не накапливать ошибки округления
+        neuron.w[i] = old_wi
+
+    # проверим, что не испортили нейрону веса своими манипуляциями
+    assert np.allclose(neuron.w, w_0), "МЫ ИСПОРТИЛИ НЕЙРОНУ ВЕСА"
+    return num_grad
+
+
 class Neuron:
 
     def __init__(self, weights, activation_function=sigmoid, activation_function_derivative=sigmoid_prime):
@@ -163,6 +223,19 @@ class Neuron:
         и 0, если второй (спуск не достиг минимума за отведённое время).
         """
         # Этот метод необходимо реализовать
+        steps = 0
+        while (True) :
+            if (steps < max_steps):
+                steps += 1
+                ind = [i for i in range(X.shape[0])]
+                np.random.shuffle(ind)
+                # ind = np.random.randint(n, size=batch_size)
+                randX = X[ind[0:batch_size], :]
+                randy = y[ind[0:batch_size], :]
+                if (self.update_mini_batch(randX, randy, learning_rate, eps) == 1) :
+                    return 1
+            else:
+                return 0
 
 
 
